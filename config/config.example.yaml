@@ -1,0 +1,49 @@
+# Non-secret application defaults. Copy this file to config/config.yaml to customize it.
+# Process environment values take precedence over this file.
+
+server:
+  timeZone: Asia/Shanghai
+
+database:
+  driver: sqlite
+  sqlitePath: ./data/drama-warden.sqlite
+  mysql:
+    host: mysql
+    port: 3306
+    database: drama_warden
+    user: drama_warden
+    connectionLimit: 10
+    connectAttempts: 30
+    connectDelayMs: 1000
+    connectTimeoutMs: 5000
+
+storage:
+  local:
+    enabled: true
+    root: ./data/media
+    shareRoot: ./data/shares
+  quark:
+    stateDirectory: ./data/.quarkclouddrive
+    recycleDirectory: /DramaWarden-Recycle/Quark
+  pan115:
+    minIntervalMs: 3000
+    wafCooldownMs: 300000
+
+indexer:
+  smartstrm:
+    # Set both non-secret fields and SMARTSTRM_WEBHOOK_TOKEN in .env to enable this provider.
+    baseUrl: null
+    taskName: null
+
+subtitles:
+  workerEnabled: true
+  assrtEnabled: false
+  openSubtitlesUserAgent: drama-warden v0.1.0
+
+automation:
+  enabled: false
+  scanIntervalMinutes: 30
+  autoProcess: false
+
+plugins:
+  modules: []

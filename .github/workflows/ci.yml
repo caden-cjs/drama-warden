@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drama_warden_test
+          MYSQL_USER: drama_warden
+          MYSQL_PASSWORD: drama_warden
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run check
+      - run: npm run check:plugin-sdk
+      - run: npm run check:licenses
+      - run: npm test
+        env:
+          RUN_MYSQL_INTEGRATION: '1'
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_DATABASE: drama_warden_test
+          MYSQL_USER: drama_warden
+          MYSQL_PASSWORD: drama_warden
+          MYSQL_CONNECT_ATTEMPTS: 12
+          MYSQL_CONNECT_DELAY_MS: 1000
+      - run: npm run check:package
+      - run: npm run check:public-boundary
+      - run: npm run check:git-history
+      - run: npm run build
+      - run: docker build -t drama-warden:ci .
+      - name: Smoke-test the default Docker image
+        run: sh scripts/smoke-default-image.sh drama-warden:ci
+
+  minimum-supported-node:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drama_warden_test
+          MYSQL_USER: drama_warden
+          MYSQL_PASSWORD: drama_warden
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.15.0'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run check:plugin-sdk
+      - name: Smoke-test app startup on minimum Node
+        env:
+          PORT: '18889'
+          API_ACCESS_TOKEN: ci-minimum-node-smoke
+          SQLITE_PATH: ${{ runner.temp }}/drama-warden-minimum-node.sqlite
+          LOCAL_STORAGE_ENABLED: 'false'
+        run: |
+          node --env-file-if-exists=.env scripts/start.mjs > "$RUNNER_TEMP/minimum-node-start.log" 2>&1 &
+          app_pid=$!
+          cleanup() {
+            kill "$app_pid" 2>/dev/null || true
+            wait "$app_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent "http://127.0.0.1:${PORT}/api/health" >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$app_pid" 2>/dev/null; then
+              cat "$RUNNER_TEMP/minimum-node-start.log"
+              exit 1
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/minimum-node-start.log"
+          exit 1
+      - run: npm test
+        env:
+          RUN_MYSQL_INTEGRATION: '1'
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_DATABASE: drama_warden_test
+          MYSQL_USER: drama_warden
+          MYSQL_PASSWORD: drama_warden
+          MYSQL_CONNECT_ATTEMPTS: 12
+          MYSQL_CONNECT_DELAY_MS: 1000
+      - run: npm run build

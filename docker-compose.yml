@@ -1,0 +1,87 @@
+services:
+  drama-warden:
+    build:
+      context: .
+      args:
+        INCLUDE_115_CLI: ${INCLUDE_115_CLI:-false}
+        INCLUDE_QUARK_CLI: ${INCLUDE_QUARK_CLI:-false}
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8889}:${PORT:-8080}"
+    environment:
+      PORT: ${PORT:-8080}
+      API_ACCESS_TOKEN: ${API_ACCESS_TOKEN:-}
+      DRAMA_WARDEN_CONFIG: ${DRAMA_WARDEN_CONFIG:-}
+      DB_DRIVER: ${DB_DRIVER:-}
+      SQLITE_PATH: ${SQLITE_PATH:-}
+      MYSQL_HOST: ${MYSQL_HOST:-}
+      MYSQL_PORT: ${MYSQL_PORT:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-}
+      MYSQL_USER: ${MYSQL_USER:-}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      MYSQL_CONNECTION_LIMIT: ${MYSQL_CONNECTION_LIMIT:-}
+      MYSQL_CONNECT_ATTEMPTS: ${MYSQL_CONNECT_ATTEMPTS:-}
+      MYSQL_CONNECT_DELAY_MS: ${MYSQL_CONNECT_DELAY_MS:-}
+      MYSQL_CONNECT_TIMEOUT_MS: ${MYSQL_CONNECT_TIMEOUT_MS:-}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      OPENSUBTITLES_API_KEY: ${OPENSUBTITLES_API_KEY:-}
+      OPENSUBTITLES_USER_AGENT: ${OPENSUBTITLES_USER_AGENT:-}
+      SUBTITLE_ASSRT_ENABLED: ${SUBTITLE_ASSRT_ENABLED:-}
+      SUBTITLE_WORKER_ENABLED: ${SUBTITLE_WORKER_ENABLED:-}
+      FEISHU_WEBHOOK_URL: ${FEISHU_WEBHOOK_URL:-}
+      FEISHU_WEBHOOK_SECRET: ${FEISHU_WEBHOOK_SECRET:-}
+      SMARTSTRM_BASE_URL: ${SMARTSTRM_BASE_URL:-}
+      SMARTSTRM_WEBHOOK_TOKEN: ${SMARTSTRM_WEBHOOK_TOKEN:-}
+      SMARTSTRM_TASK_NAME: ${SMARTSTRM_TASK_NAME:-}
+      QUARK_CLI_PATH: ${QUARK_CLI_PATH:-}
+      QUARK_STATE_DIR: ${QUARK_STATE_DIR:-}
+      QUARK_RECYCLE_DIR: ${QUARK_RECYCLE_DIR:-}
+      PAN115_CLI_PATH: ${PAN115_CLI_PATH:-}
+      PAN115_COOKIE: ${PAN115_COOKIE:-}
+      PAN115_MIN_INTERVAL_MS: ${PAN115_MIN_INTERVAL_MS:-}
+      PAN115_WAF_COOLDOWN_MS: ${PAN115_WAF_COOLDOWN_MS:-}
+      HOME: /app/data
+      TZ: ${TZ:-}
+      DRAMA_WARDEN_PLUGINS: ${DRAMA_WARDEN_PLUGINS:-}
+      FOLLOWUP_AUTOMATION_ENABLED: ${FOLLOWUP_AUTOMATION_ENABLED:-}
+      FOLLOWUP_SCAN_INTERVAL_MINUTES: ${FOLLOWUP_SCAN_INTERVAL_MINUTES:-}
+      FOLLOWUP_AUTO_PROCESS: ${FOLLOWUP_AUTO_PROCESS:-}
+      LOCAL_STORAGE_ENABLED: ${LOCAL_STORAGE_ENABLED:-}
+      LOCAL_STORAGE_ROOT: ${LOCAL_STORAGE_ROOT:-}
+      LOCAL_STORAGE_SHARE_ROOT: /local-shares
+    volumes:
+      - drama-warden-data:/app/data
+      - ./config:/app/config:ro
+      - ${LOCAL_STORAGE_SHARE_ROOT_HOST:-./data/shares}:/local-shares:ro
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const port=process.env.PORT||8080;fetch('http://127.0.0.1:'+port+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  mysql:
+    image: mysql:8.4
+    profiles: [mysql]
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-drama_warden}
+      MYSQL_USER: ${MYSQL_USER:-drama_warden}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+    volumes:
+      - drama-warden-mysql-data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  drama-warden-data:
+  drama-warden-mysql-data:

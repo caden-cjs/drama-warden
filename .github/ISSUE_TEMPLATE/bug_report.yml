@@ -1,0 +1,76 @@
+name: 缺陷报告
+description: 报告可复现的问题
+title: "[缺陷] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请移除 API 令牌、Cookie、Webhook、网盘分享链接、个人路径和真实媒体信息。请勿上传 `.env`、配置文件、数据库或未经脱敏的日志。
+  - type: input
+    id: version
+    attributes:
+      label: Drama Warden 版本
+      description: 可填写发布版本、Git commit，或说明使用当前源码。
+      placeholder: 例如 0.1.0 或当前 main
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: 部署方式
+      options:
+        - Docker Compose
+        - Node.js 直接运行
+        - 其他
+    validations:
+      required: true
+  - type: dropdown
+    id: database
+    attributes:
+      label: 数据库
+      options:
+        - SQLite
+        - MySQL 8
+        - 不确定
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+      description: 描述你希望发生什么。
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 描述实际行为，以及错误出现的大致时间。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+      description: 使用合成节目名和示例路径说明步骤，不要粘贴真实分享链接或媒体清单。
+      placeholder: |
+        1. 打开……
+        2. 执行……
+        3. 观察到……
+    validations:
+      required: true
+  - type: textarea
+    id: sanitized_logs
+    attributes:
+      label: 脱敏日志（可选）
+      description: 粘贴前请删除令牌、Cookie、Webhook、分享链接、IP 地址、个人路径和节目/媒体数据。
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 隐私检查
+      options:
+        - label: 我确认没有包含凭据、真实分享链接、个人路径、数据库或真实媒体数据。
+          required: true
