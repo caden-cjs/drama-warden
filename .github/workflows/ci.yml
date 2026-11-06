@@ -8,6 +8,20 @@ permissions:
   contents: read
 
 jobs:
+  rust-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check the Rust backend workspace at its declared MSRV
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}/rust:/work"
+          --workdir /work
+          rust:1.88-slim@sha256:38bc5a86d998772d4aec2348656ed21438d20fcdce2795b56ca434cf21430d89
+          cargo check --workspace --locked
+
   check:
     runs-on: ubuntu-latest
     services:

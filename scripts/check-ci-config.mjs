@@ -37,6 +37,12 @@ assert.deepEqual(sdkNodeFloor, appNodeFloor, 'application and plugin SDK must de
 const jobs = workflow.jobs || {};
 assert.ok(jobs.check, 'CI must include the full release check job');
 assert.ok(jobs['minimum-supported-node'], 'CI must include the minimum Node compatibility job');
+assert.ok(jobs['rust-backend'], 'CI must compile the Rust backend workspace');
+assert.ok(
+  (jobs['rust-backend'].steps || []).some((step) =>
+    String(step.run || '').includes('cargo check --workspace --locked')),
+  'Rust CI must use the committed Cargo lockfile',
+);
 
 const checkoutSteps = Object.entries(jobs).flatMap(([jobName, job]) =>
   (job.steps || [])

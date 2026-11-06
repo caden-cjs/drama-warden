@@ -1,5 +1,7 @@
 # drama-warden
 
+> **Rust migration:** the `rust-backend` branch contains the initial Rust service and language-neutral plugin protocol. It is not yet feature-compatible with the Node.js service on `main`; keep production data and automatic writes on the existing deployment until API and workflow parity is complete.
+
 **追剧引擎**：面向家庭媒体库的追更与归档自动化项目。
 
 项目会把经过长期使用验证的追更流程整理成独立、可配置、可扩展的开源应用。核心负责节目、季、集和追更状态；外部元数据、资源搜索、网盘存储、索引和通知通过插件接入。
